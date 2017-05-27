@@ -31,33 +31,62 @@ if [ ! -x "$CURLPATH/configure" ]; then
 	fi
 fi
 
-git apply ../patches/patch_curl_fixes1172.diff
+#git apply ../patches/patch_curl_fixes1172.diff
 
 export CC="$XCODE/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang"
 DESTDIR="$SCRIPTPATH/../prebuilt-with-ssl/iOS"
 
 export IPHONEOS_DEPLOYMENT_TARGET="7"
-ARCHS=(armv7 armv7s arm64 i386 x86_64)
-HOSTS=(armv7 armv7s arm i386 x86_64)
-PLATFORMS=(iPhoneOS iPhoneOS iPhoneOS iPhoneSimulator iPhoneSimulator)
-SDK=(iPhoneOS iPhoneOS iPhoneOS iPhoneSimulator iPhoneSimulator)
+#ARCHS=(armv7 armv7s arm64 i386 x86_64)
+#HOSTS=(armv7 armv7s arm i386 x86_64)
+#PLATFORMS=(iPhoneOS iPhoneOS iPhoneOS iPhoneSimulator iPhoneSimulator)
+#SDK=(iPhoneOS iPhoneOS iPhoneOS iPhoneSimulator iPhoneSimulator)
+ARCHS=(armv7 arm64)
+HOSTS=(armv7 arm)
+PLATFORMS=(iPhoneOS iPhoneOS)
+SDK=(iPhoneOS iPhoneOS)
 
 #Build for all the architectures
 for (( i=0; i<${#ARCHS[@]}; i++ )); do
 	ARCH=${ARCHS[$i]}
-	export CFLAGS="-arch $ARCH -pipe -Os -gdwarf-2 -isysroot $XCODE/Platforms/${PLATFORMS[$i]}.platform/Developer/SDKs/${SDK[$i]}.sdk -miphoneos-version-min=${IPHONEOS_DEPLOYMENT_TARGET} -fembed-bitcode -Werror=partial-availability"
-	export LDFLAGS="-arch $ARCH -isysroot $XCODE/Platforms/${PLATFORMS[$i]}.platform/Developer/SDKs/${SDK[$i]}.sdk"
+	export CFLAGS="-arch $ARCH -pipe -Os -gdwarf-2 -isysroot $XCODE/Platforms/${PLATFORMS[$i]}.platform/Developer/SDKs/${SDK[$i]}.sdk -miphoneos-version-min=${IPHONEOS_DEPLOYMENT_TARGET} -fembed-bitcode -Werror=partial-availability -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables -flto"
+	export LDFLAGS="-arch $ARCH -isysroot $XCODE/Platforms/${PLATFORMS[$i]}.platform/Developer/SDKs/${SDK[$i]}.sdk -Wl,-s"
 	if [ "${PLATFORMS[$i]}" = "iPhoneSimulator" ]; then
 		export CPPFLAGS="-D__IPHONE_OS_VERSION_MIN_REQUIRED=${IPHONEOS_DEPLOYMENT_TARGET%%.*}0000"
 	fi
 	cd "$CURLPATH"
 	./configure	--host="${HOSTS[$i]}-apple-darwin" \
 			--with-darwinssl \
-			--enable-static \
-			--disable-shared \
 			--enable-threaded-resolver \
 			--disable-verbose \
-			--enable-ipv6
+      --disable-ares \
+      --disable-ftp \
+      --disable-file \
+      --disable-ldap \
+      --disable-ldaps \
+      --disable-rtsp \
+      --disable-dict \
+      --disable-telnet \
+      --disable-tftp \
+      --disable-pop3 \
+      --disable-imap \
+      --disable-smb \
+      --disable-smtp \
+      --disable-gopher \
+      --disable-cookies \
+      --without-librtmp \
+      --disable-manual \
+      --disable-sspi \
+      --without-libidn \
+      --disable-versioned-symbols \
+      --enable-hidden-symbols \
+      --disable-unix-sockets \
+      --disable-crypto-auth \
+      --enable-static \
+      --disable-shared
+      #--disable-ipv6 \
+      #--disable-proxy \
+            
 	EXITCODE=$?
 	if [ $EXITCODE -ne 0 ]; then
 		echo "Error running the cURL configure program"
